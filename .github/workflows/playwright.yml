@@ -4,6 +4,16 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag do cenário a executar (ex: @smoke)'
+        required: false
+        default: '@smoke'
+      browser:
+        description: 'Browser a ser usado (chromium, firefox, webkit)'
+        required: false
+        default: 'chromium'
 jobs:
   test:
     timeout-minutes: 60
@@ -13,12 +23,24 @@ jobs:
     - uses: actions/setup-node@v4
       with:
         node-version: lts/*
+    
     - name: Install dependencies
       run: npm ci
+    
     - name: Install Playwright Browsers
       run: npx playwright install --with-deps
+    
     - name: Run Playwright tests
-      run: npx playwright test
+      run: |
+        TAG="${{ github.event.inputs.tag }}"
+        BROWSER="${{ github.event.inputs.browser }}"
+
+        if [ "$TAG" ]; then
+          npx playwright test --grep "$TAG" --project="$BROWSER"
+        else
+          npx playwright test --project="$BROWSER"
+        fi
+    
     - uses: actions/upload-artifact@v4
       if: ${{ !cancelled() }}
       with:
