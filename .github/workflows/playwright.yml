@@ -41,9 +41,11 @@ jobs:
           npx playwright test --project="$BROWSER"
         fi
     
-    - uses: actions/upload-artifact@v4
-      if: ${{ !cancelled() }}
+    - name: Deploy Playwright HTML report to gh-page
+      if: always()
+      uses: peaceiris/actions-gh-pages@v4
       with:
-        name: playwright-report
-        path: playwright-report/
-        retention-days: 30
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./playwright-report
+        publish_branch: gh-page
+        force_orphan: true
